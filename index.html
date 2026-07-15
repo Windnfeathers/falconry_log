@@ -126,7 +126,7 @@ textarea{resize:vertical;min-height:80px}
       <input id="b-arrival-date" type="date">
       <label>Arrival / trap weight</label>
       <div class="field-row">
-        <input id="b-arrival-weight" type="number" step="0.1" placeholder="0.0">
+        <input id="b-arrival-weight" type="number" step="0.01" placeholder="0.0">
         <select id="b-arrival-unit" style="max-width:130px">
           <option value="oz">Ounces</option>
           <option value="g">Grams</option>
@@ -134,9 +134,9 @@ textarea{resize:vertical;min-height:80px}
         </select>
       </div>
       <label>Target weight minimum (optional)</label>
-      <input id="b-target-min" type="number" step="0.1" placeholder="leave blank if unknown">
+      <input id="b-target-min" type="number" step="0.01" placeholder="leave blank if unknown">
       <label>Target weight maximum (optional)</label>
-      <input id="b-target-max" type="number" step="0.1" placeholder="leave blank if unknown">
+      <input id="b-target-max" type="number" step="0.01" placeholder="leave blank if unknown">
       <label>Notes</label>
       <textarea id="b-notes" placeholder="Source, species notes, etc."></textarea>
       <div style="margin-top:16px;display:flex;gap:8px">
@@ -246,15 +246,15 @@ textarea{resize:vertical;min-height:80px}
       <label>Time</label>
       <input id="m-time" type="time" style="font-size:16px;padding:12px;border:1px solid var(--border-md);border-radius:8px;background:var(--bg);color:var(--text);-webkit-appearance:none;appearance:none">
       <label>Pre-feed weight</label>
-      <input id="m-pre" type="number" step="0.1" placeholder="0.0" inputmode="decimal">
+      <input id="m-pre" type="number" step="0.01" placeholder="0.0" inputmode="decimal">
       <label>Post-feed weight <span style="font-weight:400;color:var(--text-faint)">(auto-calculates food eaten)</span></label>
-      <input id="m-post" type="number" step="0.1" placeholder="0.0" inputmode="decimal">
+      <input id="m-post" type="number" step="0.01" placeholder="0.0" inputmode="decimal">
       <label>Food type</label>
       <input id="m-food-type" type="text" placeholder="quail, mouse, chick...">
       <label>Food weight <span style="font-weight:400;color:var(--text-faint)">(leave blank if using pre/post)</span></label>
-      <input id="m-food-wt" type="number" step="0.1" placeholder="0.0" inputmode="decimal">
+      <input id="m-food-wt" type="number" step="0.01" placeholder="0.0" inputmode="decimal">
       <label>Temperature (F)</label>
-      <input id="m-temp" type="number" step="0.1" placeholder="0.0" inputmode="decimal">
+      <input id="m-temp" type="number" step="0.01" placeholder="0.0" inputmode="decimal">
       <label>Performance (1-10)</label>
       <div class="perf-row" id="perf-btns"></div>
       <label>Journal / notes</label>
@@ -265,9 +265,9 @@ textarea{resize:vertical;min-height:80px}
     <div class="card">
       <h2>Pre/post weight calculator</h2>
       <label>Pre-feed weight</label>
-      <input id="calc-pre" type="number" step="0.1" placeholder="0.0" inputmode="decimal">
+      <input id="calc-pre" type="number" step="0.01" placeholder="0.0" inputmode="decimal">
       <label>Post-feed weight</label>
-      <input id="calc-post" type="number" step="0.1" placeholder="0.0" inputmode="decimal">
+      <input id="calc-post" type="number" step="0.01" placeholder="0.0" inputmode="decimal">
       <button class="btn full" style="margin-top:10px" onclick="runCalc()">Calculate food eaten</button>
       <div id="calc-result" style="display:none" class="calc-result"></div>
     </div>
