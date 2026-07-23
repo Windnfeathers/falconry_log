@@ -375,7 +375,7 @@ function fmtW(val,unit){
   const v=parseFloat(val);
   if(unit==='g')return v.toFixed(1)+'g';
   if(unit==='lbs_oz'){const lb=Math.floor(v/16);const oz=(v%16).toFixed(1);return lb+'lb '+oz+'oz';}
-  return v.toFixed(1)+'oz';
+  return v.toFixed(2)+'oz';
 }
 function showToast(msg){
   const t=document.getElementById('toast');
@@ -853,14 +853,12 @@ function stopListening(){
 }
 function toggleVoice(){isListening?stopListening():startListening();}
 
-// Voice entries always create new independent entries
-let _voiceEntry=null;
-function getOrCreateVoiceEntry(){
-  if(!_voiceEntry){_voiceEntry=makeVoiceEntry();}
-  return _voiceEntry;
-}
-function commitVoiceEntry(){
-  if(_voiceEntry){S.entries.push(_voiceEntry);_voiceEntry=null;save();updateToday();}
+function saveVoiceEntry(overrides){
+  const entry={id:uid(),birdId:currentBirdId,date:today(),timestamp:new Date().toISOString(),
+    prefeedWeight:null,postfeedWeight:null,foodType:null,foodWeight:null,
+    temp:null,performance:null,journal:null,...overrides};
+  S.entries.push(entry);save();updateToday();
+  return entry;
 }
 
 function processVoice(text){
@@ -868,17 +866,25 @@ function processVoice(text){
   const u=S.settings.unit;
 
   if(/\b(stop|done|save|that'?s? all|finish)\b/.test(text)){
-    commitVoiceEntry();
-    speak('Entry saved.');showToast('Entry saved');
+    speak('Stopped.');showToast('Stopped');
     stopListening();return;
   }
 
   if(/\b(cancel|undo|scratch that|remove that|delete that)\b/.test(text)){
-    if(_voiceEntry){
+    const all=S.entries.filter(e=>e.birdId===currentBirdId);
+    if(all.length){
+      const last=all[all.length-1];
       const fields=['journal','performance','temp','foodWeight','foodType','postfeedWeight','prefeedWeight'];
-      let removed=null;
-      for(const f of fields){if(_voiceEntry[f]!=null){removed=f;_voiceEntry[f]=null;break;}}
       const label={prefeedWeight:'Weight',postfeedWeight:'Post-feed',foodType:'Food type',foodWeight:'Food weight',temp:'Temperature',performance:'Performance',journal:'Note'};
+      let removed=null;
+      for(const f of fields){
+        if(last[f]!=null){
+          removed=f;last[f]=null;break;
+        }
+      }
+      const isEmpty=fields.every(f=>last[f]==null);
+      if(isEmpty)S.entries=S.entries.filter(e=>e.id!==last.id);
+      save();updateToday();
       speak((removed?label[removed]:'Nothing')+' removed.');
       showToast((removed?label[removed]:'Nothing')+' removed');
     }
@@ -888,7 +894,7 @@ function processVoice(text){
   if(/\b(weight|wait|weigh[st]?|pre.?feed|she weighs?)\b/.test(text)){
     const val=numFrom(text);
     if(val){
-      const e=getOrCreateVoiceEntry();e.prefeedWeight=val;
+      saveVoiceEntry({prefeedWeight:val});
       speak('Weight '+fmtW(val,u));showToast('Weight: '+fmtW(val,u));
     }
     return;
@@ -896,9 +902,11 @@ function processVoice(text){
 
   if(/\b(post.?feed|after|she ate|post weight)\b/.test(text)){
     const val=numFrom(text);
-    if(val&&_voiceEntry){
-      const diff=Math.abs(parseFloat(_voiceEntry.prefeedWeight||0)-val).toFixed(2);
-      _voiceEntry.postfeedWeight=val;if(!_voiceEntry.foodWeight)_voiceEntry.foodWeight=parseFloat(diff);
+    if(val){
+      const last=S.entries.filter(e=>e.birdId===currentBirdId).pop();
+      const pre=last?.prefeedWeight||0;
+      const diff=parseFloat(Math.abs(parseFloat(pre)-val).toFixed(2));
+      saveVoiceEntry({postfeedWeight:val,foodWeight:diff});
       speak('Post-feed '+fmtW(val,u)+'. She ate '+fmtW(diff,u));showToast('Ate: '+fmtW(diff,u));
     }
     return;
@@ -907,7 +915,7 @@ function processVoice(text){
   if(/\b(temp|temperature)\b/.test(text)){
     const val=numFrom(text);
     if(val){
-      const e=getOrCreateVoiceEntry();e.temp=val;
+      saveVoiceEntry({temp:val});
       speak('Temperature '+val+' degrees');showToast('Temp: '+val+'°F');
     }
     return;
@@ -924,7 +932,7 @@ function processVoice(text){
       const wt=numFrom(buf);
       const typeM=buf.match(/\b(quail|mouse|chick|rabbit|pigeon|starling|sparrow|rat|duck|squirrel|tidbit|prey)\b/i);
       const foodType=typeM?typeM[0]:'food';
-      const e=getOrCreateVoiceEntry();e.foodType=foodType;if(wt)e.foodWeight=wt;
+      saveVoiceEntry({foodType,foodWeight:wt||null});
       speak('Food: '+foodType+(wt?' '+fmtW(wt,u):''));showToast('Food: '+foodType+(wt?' '+fmtW(wt,u):''));
       setTimeout(()=>{window._foodCommitted=false;},2000);
     };
@@ -941,7 +949,7 @@ function processVoice(text){
       const wt=numFrom(buf);
       const typeM=buf.match(/\b(quail|mouse|chick|rabbit|pigeon|starling|sparrow|rat|duck|squirrel|tidbit|prey)\b/i);
       const foodType=typeM?typeM[0]:'food';
-      const e=getOrCreateVoiceEntry();e.foodType=foodType;if(wt)e.foodWeight=wt;
+      saveVoiceEntry({foodType,foodWeight:wt||null});
       speak('Food: '+foodType+(wt?' '+fmtW(wt,u):''));showToast('Food: '+foodType+(wt?' '+fmtW(wt,u):''));
       setTimeout(()=>{window._foodCommitted=false;},2000);
     },5000);
@@ -951,7 +959,7 @@ function processVoice(text){
   if(/\b(performance|perf|rating|score)\b/.test(text)){
     const val=numFrom(text);
     if(val>=1&&val<=10){
-      const e=getOrCreateVoiceEntry();e.performance=Math.round(val);
+      saveVoiceEntry({performance:Math.round(val)});
       speak('Performance '+Math.round(val)+' out of 10');showToast('Performance: '+Math.round(val)+'/10');
     }
     return;
@@ -960,7 +968,7 @@ function processVoice(text){
   if(/\b(note|journal|log that|record)\b/.test(text)){
     const noteText=text.replace(/^(note|journal|log that|record)[s]?\s*(that)?\s*/i,'').trim();
     if(noteText.length>2){
-      const e=getOrCreateVoiceEntry();e.journal=(e.journal?e.journal+'. ':'')+noteText;
+      saveVoiceEntry({journal:noteText});
       speak('Note added.');showToast('Note saved');
     }
   }
